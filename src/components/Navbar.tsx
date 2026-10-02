@@ -2,15 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Menu as MenuIcon, X, UtensilsCrossed, Sparkles } from 'lucide-react';
+import { ShoppingBag, Menu as MenuIcon, X, UtensilsCrossed, Sparkles, LogOut, User as UserIcon, LogIn } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, signOut } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -26,6 +31,9 @@ export default function Navbar() {
     { name: 'Our Story', href: '/#pot' },
     { name: 'Pre-Order', href: '/checkout' },
   ];
+
+  const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Guest';
 
   return (
     <header
@@ -77,8 +85,71 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Actions: Bag Button & Mobile Menu Toggle */}
-          <div className="flex items-center gap-4">
+          {/* User Auth Profile & Bag Action */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* User Profile / Login Button */}
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 p-1 rounded-full border border-[#C5A059]/40 bg-[#FFFDF9] hover:bg-[#F4EFE6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C5A059]"
+                  aria-label="User menu"
+                >
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt={userName}
+                      className="w-8 h-8 rounded-full object-cover border border-[#C5A059]"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#0B201A] text-[#C5A059] flex items-center justify-center font-serif font-bold text-xs">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="hidden lg:inline text-xs font-sans font-medium text-[#0B201A] pr-2 max-w-[120px] truncate">
+                    {userName}
+                  </span>
+                </button>
+
+                {/* Profile Dropdown */}
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-3 space-y-2 text-xs font-sans border border-[#C5A059]/40 z-50"
+                    >
+                      <div className="p-2 border-b border-[#C5A059]/20">
+                        <p className="font-serif font-bold text-sm text-[#0B201A] truncate">{userName}</p>
+                        <p className="text-[11px] text-[#2B4C40] truncate">{user.email}</p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-red-700 hover:bg-red-50 transition-colors text-left font-medium"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#C5A059]/50 bg-[#FFFDF9] hover:bg-[#F4EFE6] text-[#0B201A] text-xs font-sans tracking-wider uppercase font-medium transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5 text-[#C5A059]" />
+                <span>Sign In</span>
+              </Link>
+            )}
+
+            {/* Shopping Bag Button */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2.5 rounded-full bg-[#0B201A] text-[#FAF7F2] hover:bg-[#163E32] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C5A059] flex items-center gap-2 px-4 shadow-sm"
@@ -125,6 +196,17 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
+
+              {!user && (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block font-serif text-lg text-[#C5A059] hover:text-[#0B201A] transition-colors py-2"
+                >
+                  Sign In with Google
+                </Link>
+              )}
+
               <div className="pt-2">
                 <Link
                   href="/menu"
