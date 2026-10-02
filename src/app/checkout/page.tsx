@@ -106,7 +106,8 @@ export default function CheckoutPage() {
 
       // Success: clear cart and redirect to /order/[id]
       clearCart();
-      router.push(`/order/${data.orderId}`);
+      const redirectUrl = data.emailSent === false ? `/order/${data.orderId}?emailSent=false` : `/order/${data.orderId}`;
+      router.push(redirectUrl);
     } catch (err: any) {
       console.error('Checkout error:', err);
       setServerError(err.message || 'Failed to submit pre-order. Please try again.');

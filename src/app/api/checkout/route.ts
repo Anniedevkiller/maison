@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { DISHES } from '@/data/dishes';
+import { sendOrderEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -142,10 +143,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // 6. Return success response
+    // 6. Send Order Confirmation Email via Resend
+    let emailSent = false;
+    try {
+      const emailResult = await sendOrderEmail(order, orderItemsPayload);
+      emailSent = emailResult.success;
+      if (!emailResult.success) {
+        console.error('Checkout API: Order saved but email dispatch failed:', emailResult.error);
+      }
+    } catch (emailErr) {
+      console.error('Checkout API: Unexpected error while sending order email:', emailErr);
+    }
+
+    // 7. Return success response
     return NextResponse.json({
       success: true,
       orderId: order.id,
+      emailSent,
     });
   } catch (err: any) {
     console.error('Checkout API Exception:', err);

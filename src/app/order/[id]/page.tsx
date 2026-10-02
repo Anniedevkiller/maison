@@ -3,9 +3,17 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { CheckCircle2, Calendar, MapPin, ArrowRight, Clock, AlertCircle, ShoppingBag, UtensilsCrossed } from 'lucide-react';
 
-export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OrderDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ emailSent?: string }>;
+}) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const orderId = resolvedParams.id;
+  const emailFailed = resolvedSearchParams.emailSent === 'false';
 
   const supabase = await createClient();
 
@@ -83,6 +91,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               Your pre-order has been recorded in Supabase. Our culinary team will slow-roast and woodfire your feast for your selected date.
             </p>
           </div>
+
+          {/* Email Dispatch Notice */}
+          {emailFailed && (
+            <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-300 text-xs text-amber-900 flex items-center gap-3 font-sans">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+              <span>
+                Note: Your pre-order is safely recorded in our kitchen registry, but the confirmation email could not be sent at this time.
+              </span>
+            </div>
+          )}
 
           <div className="gold-divider" />
 
