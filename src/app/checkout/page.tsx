@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Clock, MapPin, Phone, User as UserIcon, Mail, ShieldCheck, CheckCircle2, ShoppingBag, LogIn, Lock } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, User as UserIcon, ShieldCheck, CheckCircle2, ShoppingBag, LogIn, Lock, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function CheckoutPage() {
@@ -31,6 +31,7 @@ export default function CheckoutPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Auto populate user info when logged in
   useEffect(() => {
@@ -66,8 +67,9 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError(null);
 
     if (!user) {
       handleGoogleAuth();
@@ -76,28 +78,41 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
 
-    const orderDetails = {
-      orderId: `MJ-${Math.floor(100000 + Math.random() * 900000)}`,
-      items: cart,
-      customer: formData,
-      fulfilmentType,
-      subtotal,
-      deliveryFee,
-      total: grandTotal,
-      createdAt: new Date().toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-    };
+    try {
+      const payload = {
+        items: cart.map((item) => ({
+          dishId: item.dish.id,
+          dishSlug: item.dish.slug,
+          dishName: item.dish.name,
+          portionName: item.portionName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        customer: formData,
+        fulfilmentType,
+      };
 
-    sessionStorage.setItem('maison_latest_order', JSON.stringify(orderDetails));
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    setTimeout(() => {
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to place pre-order.');
+      }
+
+      // Success: clear cart and redirect to /order/[id]
       clearCart();
+      router.push(`/order/${data.orderId}`);
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setServerError(err.message || 'Failed to submit pre-order. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      router.push('/order-confirmation');
-    }, 1200);
+    }
   };
 
   if (cart.length === 0) {
@@ -151,7 +166,7 @@ export default function CheckoutPage() {
               <div>
                 <h3 className="font-serif font-bold text-lg text-[#0B201A]">Authentication Required</h3>
                 <p className="font-sans text-xs text-[#2B4C40] mt-0.5">
-                  Google Sign-In is required to secure your pre-order reservation window.
+                  Google Sign-In is required to secure your pre-order reservation window in Supabase.
                 </p>
               </div>
             </div>
@@ -182,6 +197,14 @@ export default function CheckoutPage() {
               <span>{isLoggingIn ? 'Connecting to Google...' : 'Continue with Google'}</span>
             </button>
           </motion.div>
+        )}
+
+        {/* Server Error Alert */}
+        {serverError && (
+          <div className="mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-3 font-sans">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600" />
+            <span>{serverError}</span>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -392,7 +415,7 @@ export default function CheckoutPage() {
 
               <div className="p-3 rounded bg-[#F3E9D2]/40 border border-[#C5A059]/30 text-[11px] text-[#0B201A] flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#C5A059] flex-shrink-0" />
-                <span>Pre-Order confirmation email will be generated instantly upon submission.</span>
+                <span>Pre-Order confirmation will be recorded directly into Supabase.</span>
               </div>
 
               <button
@@ -401,7 +424,7 @@ export default function CheckoutPage() {
                 className="w-full inline-flex items-center justify-center gap-3 bg-[#0B201A] text-[#FAF7F2] hover:bg-[#163E32] py-4 rounded-md font-sans text-xs font-medium uppercase tracking-widest border border-[#C5A059] shadow-xl disabled:opacity-50 transition-all"
               >
                 {isSubmitting ? (
-                  <span>Reserving Your Feast...</span>
+                  <span>Submitting Pre-Order to Kitchen...</span>
                 ) : !user ? (
                   <>
                     <span>Sign in with Google to Reserve</span>

@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Menu as MenuIcon, X, UtensilsCrossed, Sparkles, LogOut, User as UserIcon, LogIn } from 'lucide-react';
+import { ShoppingBag, Menu as MenuIcon, X, UtensilsCrossed, Sparkles, LogOut, User as UserIcon, LogIn, Receipt } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +30,10 @@ export default function Navbar() {
     { name: 'Our Story', href: '/#pot' },
     { name: 'Pre-Order', href: '/checkout' },
   ];
+
+  if (user) {
+    navLinks.push({ name: 'My Orders', href: '/orders' });
+  }
 
   const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Guest';
@@ -87,7 +90,6 @@ export default function Navbar() {
 
           {/* User Auth Profile & Bag Action */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* User Profile / Login Button */}
             {user ? (
               <div className="relative">
                 <button
@@ -124,6 +126,15 @@ export default function Navbar() {
                         <p className="font-serif font-bold text-sm text-[#0B201A] truncate">{userName}</p>
                         <p className="text-[11px] text-[#2B4C40] truncate">{user.email}</p>
                       </div>
+
+                      <Link
+                        href="/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[#0B201A] hover:bg-[#F4EFE6] transition-colors font-medium"
+                      >
+                        <Receipt className="w-4 h-4 text-[#C5A059]" />
+                        <span>My Pre-Orders</span>
+                      </Link>
 
                       <button
                         onClick={() => {
