@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { CHAPTERS, DISHES } from '@/data/dishes';
 import DishCard from '@/components/DishCard';
 import ChapterIndicator from '@/components/ChapterIndicator';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import { motion, useScroll, useSpring, useMotionValueEvent } from 'framer-motion';
 import { ArrowRight, Flame, Sparkles, Utensils, Calendar, ChevronRight } from 'lucide-react';
 
 const MainScrollStoryScene = dynamic(() => import('@/components/3d/MainScrollStoryScene'), {
@@ -18,16 +18,15 @@ export default function HomePage() {
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const [currentProgress, setCurrentProgress] = useState(0);
 
-  useEffect(() => {
-    return smoothProgress.on('change', (v) => {
-      setCurrentProgress(v);
-    });
-  }, [smoothProgress]);
+  // Reliably update 3D scroll progress on every scroll tick
+  useMotionValueEvent(smoothProgress, 'change', (latest) => {
+    setCurrentProgress(latest);
+  });
 
   const featuredDishes = DISHES.filter((d) => d.isChefSpecial || d.course === 'Plats').slice(0, 3);
 
   return (
-    <div className="relative min-h-screen bg-[#FAF7F2] overflow-hidden">
+    <div className="relative min-h-screen bg-transparent overflow-hidden">
       {/* 1. SINGLE FIXED 3D CANVAS BEHIND PAGE CONTENT */}
       <MainScrollStoryScene scrollProgress={currentProgress} />
 
@@ -42,7 +41,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="lg:col-span-7 space-y-6 text-center lg:text-left"
+            className="lg:col-span-7 space-y-6 text-center lg:text-left bg-[#FFFDF9]/80 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/30 shadow-xl"
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F3E9D2] border border-[#C5A059]/40 text-[#0B201A] text-xs font-sans tracking-widest uppercase">
               <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
@@ -95,7 +94,6 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="lg:col-span-6 space-y-6 bg-[#FFFDF9]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/30 shadow-xl relative overflow-hidden adire-border-top"
           >
-            {/* Outlined Huge Number */}
             <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
               01
             </div>
@@ -119,7 +117,7 @@ export default function HomePage() {
       </section>
 
       {/* --- CHAPTER 2: THE FIRE --- */}
-      <section id="fire" className="py-24 bg-[#0B201A]/90 text-[#FAF7F2] border-y border-[#C5A059]/20 relative z-10">
+      <section id="fire" className="py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-6 h-[350px] sm:h-[450px]" />
@@ -129,9 +127,8 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-6 space-y-6 bg-[#163E32]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/40 shadow-xl relative overflow-hidden"
+              className="lg:col-span-6 space-y-6 bg-[#0B201A]/80 backdrop-blur-md text-[#FAF7F2] p-8 rounded-2xl border border-[#C5A059]/40 shadow-xl relative overflow-hidden"
             >
-              {/* Outlined Huge Number */}
               <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
                 02
               </div>
@@ -147,12 +144,12 @@ export default function HomePage() {
               </p>
 
               <div className="grid grid-cols-2 gap-4 pt-2 relative z-10">
-                <div className="p-4 rounded-lg bg-[#0B201A] border border-[#C5A059]/30">
+                <div className="p-4 rounded-lg bg-[#0B201A]/90 border border-[#C5A059]/30">
                   <Flame className="w-5 h-5 text-[#C5A059] mb-2" />
                   <h4 className="font-serif font-bold text-sm text-[#FAF7F2]">Hickory Smoke</h4>
                   <p className="font-sans text-xs text-[#FAF7F2]/70">Infused slowly under lid pressure.</p>
                 </div>
-                <div className="p-4 rounded-lg bg-[#0B201A] border border-[#C5A059]/30">
+                <div className="p-4 rounded-lg bg-[#0B201A]/90 border border-[#C5A059]/30">
                   <Utensils className="w-5 h-5 text-[#C5A059] mb-2" />
                   <h4 className="font-serif font-bold text-sm text-[#FAF7F2]">Hand-Pounded Yaji</h4>
                   <p className="font-sans text-xs text-[#FAF7F2]/70">Roasted ginger, kuli-kuli & uda.</p>
@@ -164,7 +161,7 @@ export default function HomePage() {
       </section>
 
       {/* --- FEATURED DISHES PREVIEW --- */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 bg-[#FFFDF9]/60 backdrop-blur-sm rounded-3xl border border-[#C5A059]/20 my-12">
         <div className="text-center space-y-4 max-w-2xl mx-auto mb-16">
           <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059]">
             Haute Culinary Selection
@@ -195,7 +192,7 @@ export default function HomePage() {
       </section>
 
       {/* --- CHAPTER 3: THE TABLE --- */}
-      <section id="table" className="py-24 bg-[#0B201A] text-[#FAF7F2] relative z-10">
+      <section id="table" className="py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <motion.div
@@ -203,9 +200,8 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-6 space-y-6 bg-[#163E32]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/40 shadow-2xl relative overflow-hidden"
+              className="lg:col-span-6 space-y-6 bg-[#0B201A]/80 backdrop-blur-md text-[#FAF7F2] p-8 rounded-2xl border border-[#C5A059]/40 shadow-2xl relative overflow-hidden"
             >
-              {/* Outlined Huge Number */}
               <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
                 03
               </div>
@@ -233,7 +229,6 @@ export default function HomePage() {
       <section id="order" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-8 bg-[#FFFDF9]/90 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/30 shadow-xl relative overflow-hidden adire-border-top">
-            {/* Outlined Huge Number */}
             <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
               04
             </div>
