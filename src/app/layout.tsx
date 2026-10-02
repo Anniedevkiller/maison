@@ -4,6 +4,8 @@ import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
+import Loader from '@/components/Loader';
+import CustomCursor from '@/components/CustomCursor';
 
 export const metadata: Metadata = {
   title: 'Maison Jollof | Pre-Order Haute Cuisine West African Dishes',
@@ -37,6 +39,8 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="bg-[#FAF7F2] text-[#0B201A] font-sans antialiased selection:bg-[#C5A059] selection:text-[#0B201A] bg-grain min-h-screen flex flex-col">
         <CartProvider>
+          <Loader />
+          <CustomCursor />
           <Navbar />
           <CartDrawer />
           <main className="flex-1">{children}</main>

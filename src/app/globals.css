@@ -44,7 +44,7 @@ body {
   min-height: 100vh;
 }
 
-/* Typography Custom Styles */
+/* Typography Custom Styles & Outlined Editorial Numbers */
 h1, h2, h3, h4, .font-serif {
   font-family: 'Playfair Display', Georgia, serif;
 }
@@ -53,12 +53,26 @@ h1, h2, h3, h4, .font-serif {
   font-family: 'Cinzel', serif;
 }
 
+.text-outline-gold {
+  -webkit-text-stroke: 1.5px #C5A059;
+  color: transparent;
+}
+
+.chapter-number-huge {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(5rem, 12vw, 11rem);
+  font-weight: 800;
+  line-height: 0.8;
+  opacity: 0.15;
+  user-select: none;
+}
+
 /* Glassmorphism & Fine Dining Borders */
 .glass-panel {
   background: rgba(255, 253, 249, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(197, 160, 89, 0.2);
+  border: 1px solid rgba(197, 160, 89, 0.25);
 }
 
 .glass-nav {
@@ -74,12 +88,11 @@ h1, h2, h3, h4, .font-serif {
   -webkit-text-fill-color: transparent;
 }
 
-.gold-gradient-bg {
-  background: linear-gradient(135deg, #C5A059 0%, #D4AF37 50%, #B38F29 100%);
-}
-
-.gold-border-glow {
-  box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+/* Subtle Adire/Ankara Geometric Border Pattern */
+.adire-border-top {
+  border-top: 3px double rgba(197, 160, 89, 0.4);
+  background-image: radial-gradient(rgba(197, 160, 89, 0.15) 1px, transparent 1px);
+  background-size: 12px 12px;
 }
 
 /* Scrollbar styling */

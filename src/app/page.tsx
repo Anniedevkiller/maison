@@ -1,42 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { CHAPTERS, DISHES } from '@/data/dishes';
 import DishCard from '@/components/DishCard';
-import { motion } from 'framer-motion';
-import { ArrowRight, Flame, Sparkles, Utensils, Calendar, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
+import ChapterIndicator from '@/components/ChapterIndicator';
+import { motion, useScroll, useSpring } from 'framer-motion';
+import { ArrowRight, Flame, Sparkles, Utensils, Calendar, ChevronRight } from 'lucide-react';
 
-// Lazy-load 3D scenes with static SSR fallback for fast initial paint
-const Hero3DScene = dynamic(() => import('@/components/3d/Hero3DScene'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[400px] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
-    </div>
-  ),
-});
-
-const FloatingSpices3D = dynamic(() => import('@/components/3d/FloatingSpices3D'), {
-  ssr: false,
-});
-
-const CalendarBox3D = dynamic(() => import('@/components/3d/CalendarBox3D'), {
+const MainScrollStoryScene = dynamic(() => import('@/components/3d/MainScrollStoryScene'), {
   ssr: false,
 });
 
 export default function HomePage() {
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const [currentProgress, setCurrentProgress] = useState(0);
+
+  useEffect(() => {
+    return smoothProgress.on('change', (v) => {
+      setCurrentProgress(v);
+    });
+  }, [smoothProgress]);
+
   const featuredDishes = DISHES.filter((d) => d.isChefSpecial || d.course === 'Plats').slice(0, 3);
 
   return (
     <div className="relative min-h-screen bg-[#FAF7F2] overflow-hidden">
-      {/* Dynamic 3D Floating Spices Drifting Background */}
-      <FloatingSpices3D />
+      {/* 1. SINGLE FIXED 3D CANVAS BEHIND PAGE CONTENT */}
+      <MainScrollStoryScene scrollProgress={currentProgress} />
+
+      {/* 2. STICKY CHAPTER INDICATOR */}
+      <ChapterIndicator progress={currentProgress} />
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+      <section id="hero" className="relative pt-32 pb-20 md:pt-40 md:pb-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Hero Text Copy */}
           <motion.div
@@ -79,15 +78,7 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Right Interactive 3D Jollof Pot & Steam */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="lg:col-span-5 relative flex items-center justify-center"
-          >
-            <Hero3DScene />
-          </motion.div>
+          <div className="lg:col-span-5 h-[350px] sm:h-[450px]" />
         </div>
       </section>
 
@@ -102,95 +93,71 @@ export default function HomePage() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="lg:col-span-6 relative h-[380px] sm:h-[480px] rounded-2xl overflow-hidden border border-[#C5A059]/30 shadow-2xl"
+            className="lg:col-span-6 space-y-6 bg-[#FFFDF9]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/30 shadow-xl relative overflow-hidden adire-border-top"
           >
-            <Image
-              src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop"
-              alt="Ancestral Cast Iron Pot"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B201A]/80 via-[#0B201A]/20 to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-panel text-[#0B201A]">
-              <span className="font-serif italic text-sm font-semibold text-[#C5A059]">
-                CHAPTER I — ANCESTRAL HEARTH
-              </span>
-              <p className="font-serif text-lg font-bold mt-1">The Cast-Iron Pot</p>
+            {/* Outlined Huge Number */}
+            <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
+              01
             </div>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-6 space-y-6"
-          >
-            <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059]">
+            <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059] relative z-10">
               Chapter 01
             </span>
-            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#0B201A]">
+            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#0B201A] relative z-10">
               The Pot: Ancestral Roots & Firewood Heritage
             </h2>
-            <p className="font-sans text-sm sm:text-base text-[#2B4C40] leading-relaxed">
+            <p className="font-sans text-sm sm:text-base text-[#2B4C40] leading-relaxed relative z-10">
               {CHAPTERS[1].story}
             </p>
-            <blockquote className="border-l-2 border-[#C5A059] pl-4 italic font-serif text-lg text-[#0B201A]">
+            <blockquote className="border-l-2 border-[#C5A059] pl-4 italic font-serif text-lg text-[#0B201A] relative z-10">
               &ldquo;{CHAPTERS[1].quote}&rdquo;
             </blockquote>
           </motion.div>
+
+          <div className="lg:col-span-6 h-[350px] sm:h-[450px]" />
         </div>
       </section>
 
       {/* --- CHAPTER 2: THE FIRE --- */}
-      <section id="fire" className="py-24 bg-[#F4EFE6] border-y border-[#C5A059]/20 relative z-10">
+      <section id="fire" className="py-24 bg-[#0B201A]/90 text-[#FAF7F2] border-y border-[#C5A059]/20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="lg:col-span-6 order-2 lg:order-1 space-y-6"
-            >
-              <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059]">
-                Chapter 02
-              </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#0B201A]">
-                The Fire: The Craft of Patience
-              </h2>
-              <p className="font-sans text-sm sm:text-base text-[#2B4C40] leading-relaxed">
-                {CHAPTERS[2].story}
-              </p>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-4 rounded-lg bg-[#FFFDF9] border border-[#C5A059]/30">
-                  <Flame className="w-5 h-5 text-[#C5A059] mb-2" />
-                  <h4 className="font-serif font-bold text-sm text-[#0B201A]">Hickory Smoke</h4>
-                  <p className="font-sans text-xs text-[#2B4C40]">Infused slowly under lid pressure.</p>
-                </div>
-                <div className="p-4 rounded-lg bg-[#FFFDF9] border border-[#C5A059]/30">
-                  <Utensils className="w-5 h-5 text-[#C5A059] mb-2" />
-                  <h4 className="font-serif font-bold text-sm text-[#0B201A]">Hand-Pounded Yaji</h4>
-                  <p className="font-sans text-xs text-[#2B4C40]">Roasted ginger, kuli-kuli & uda.</p>
-                </div>
-              </div>
-            </motion.div>
+            <div className="lg:col-span-6 h-[350px] sm:h-[450px]" />
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-6 order-1 lg:order-2 relative h-[380px] sm:h-[480px] rounded-2xl overflow-hidden border border-[#C5A059]/30 shadow-2xl"
+              className="lg:col-span-6 space-y-6 bg-[#163E32]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/40 shadow-xl relative overflow-hidden"
             >
-              <Image
-                src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=1200&auto=format&fit=crop"
-                alt="Woodfire Charred Cuisine"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
+              {/* Outlined Huge Number */}
+              <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
+                02
+              </div>
+
+              <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059] relative z-10">
+                Chapter 02
+              </span>
+              <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#FAF7F2] relative z-10">
+                The Fire: The Craft of Patience
+              </h2>
+              <p className="font-sans text-sm sm:text-base text-[#FAF7F2]/80 leading-relaxed relative z-10">
+                {CHAPTERS[2].story}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 pt-2 relative z-10">
+                <div className="p-4 rounded-lg bg-[#0B201A] border border-[#C5A059]/30">
+                  <Flame className="w-5 h-5 text-[#C5A059] mb-2" />
+                  <h4 className="font-serif font-bold text-sm text-[#FAF7F2]">Hickory Smoke</h4>
+                  <p className="font-sans text-xs text-[#FAF7F2]/70">Infused slowly under lid pressure.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-[#0B201A] border border-[#C5A059]/30">
+                  <Utensils className="w-5 h-5 text-[#C5A059] mb-2" />
+                  <h4 className="font-serif font-bold text-sm text-[#FAF7F2]">Hand-Pounded Yaji</h4>
+                  <p className="font-sans text-xs text-[#FAF7F2]/70">Roasted ginger, kuli-kuli & uda.</p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -222,7 +189,7 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-widest text-[#0B201A] hover:text-[#C5A059] transition-colors group"
           >
             <span>View Full Menu Cards</span>
-            <ChevronRight className="w-4 h-4 text-[#C5A059] group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-[#C5A059]" />
           </Link>
         </div>
       </section>
@@ -232,50 +199,46 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="lg:col-span-6 relative h-[380px] sm:h-[480px] rounded-2xl overflow-hidden border border-[#C5A059]/40 shadow-2xl"
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1200&auto=format&fit=crop"
-                alt="European Fine Dining Table Presentation"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-6 space-y-6"
+              className="lg:col-span-6 space-y-6 bg-[#163E32]/85 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/40 shadow-2xl relative overflow-hidden"
             >
-              <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059]">
+              {/* Outlined Huge Number */}
+              <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
+                03
+              </div>
+
+              <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059] relative z-10">
                 Chapter 03
               </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#FAF7F2]">
+              <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#FAF7F2] relative z-10">
                 The Table: The Art of Shared Communion
               </h2>
-              <p className="font-sans text-sm sm:text-base text-[#FAF7F2]/80 leading-relaxed">
+              <p className="font-sans text-sm sm:text-base text-[#FAF7F2]/80 leading-relaxed relative z-10">
                 {CHAPTERS[3].story}
               </p>
-              <blockquote className="border-l-2 border-[#C5A059] pl-4 italic font-serif text-lg text-[#C5A059]">
+              <blockquote className="border-l-2 border-[#C5A059] pl-4 italic font-serif text-lg text-[#C5A059] relative z-10">
                 &ldquo;{CHAPTERS[3].quote}&rdquo;
               </blockquote>
             </motion.div>
+
+            <div className="lg:col-span-6 h-[350px] sm:h-[450px]" />
           </div>
         </div>
       </section>
 
-      {/* --- CHAPTER 4: THE ORDER (PRE-ORDER IN 3 STEPS + 3D BOX) --- */}
+      {/* --- CHAPTER 4: THE ORDER --- */}
       <section id="order" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-8">
-            <div>
+          <div className="lg:col-span-7 space-y-8 bg-[#FFFDF9]/90 backdrop-blur-md p-8 rounded-2xl border border-[#C5A059]/30 shadow-xl relative overflow-hidden adire-border-top">
+            {/* Outlined Huge Number */}
+            <div className="absolute top-2 right-4 chapter-number-huge pointer-events-none text-outline-gold">
+              04
+            </div>
+
+            <div className="relative z-10">
               <span className="text-xs font-sans font-bold tracking-widest uppercase text-[#C5A059]">
                 Chapter 04
               </span>
@@ -287,9 +250,9 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 relative z-10">
               {CHAPTERS[4].steps?.map((st) => (
-                <div key={st.step} className="flex gap-4 p-5 rounded-xl bg-[#FFFDF9] border border-[#C5A059]/30 shadow-md">
+                <div key={st.step} className="flex gap-4 p-5 rounded-xl bg-[#FAF7F2] border border-[#C5A059]/30 shadow-sm">
                   <div className="w-10 h-10 rounded-full bg-[#0B201A] text-[#C5A059] flex items-center justify-center font-serif font-bold text-sm flex-shrink-0">
                     {st.step}
                   </div>
@@ -301,7 +264,7 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 relative z-10">
               <Link
                 href="/checkout"
                 className="inline-flex items-center gap-3 bg-[#0B201A] text-[#FAF7F2] hover:bg-[#163E32] px-8 py-4 rounded-md font-sans text-xs tracking-widest uppercase font-medium border border-[#C5A059] shadow-xl transition-all"
@@ -312,13 +275,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col items-center justify-center text-center p-8 rounded-2xl glass-panel border border-[#C5A059]/40 shadow-2xl">
-            <CalendarBox3D />
-            <h3 className="font-serif font-bold text-xl text-[#0B201A] mt-4">48-Hour Advance Notice</h3>
-            <p className="font-sans text-xs text-[#2B4C40] mt-2 max-w-xs">
-              Every order receives an assigned time slot and custom luxury heat-insulated packaging.
-            </p>
-          </div>
+          <div className="lg:col-span-5 h-[350px] sm:h-[450px]" />
         </div>
       </section>
     </div>
